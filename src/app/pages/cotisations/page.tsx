@@ -2,18 +2,13 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Cotisation } from '@/types/cotisation';
-import {
-  getCotisations,
-  createCotisation,
-  updateCotisation,
-  deleteCotisation,
-} from '@/services/cotisationService';
-import CotisationForm from '@/components/CotisationForm';
+import { getCotisations, createCotisation, updateCotisation, deleteCotisation } from '@/services/cotisationService';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
-import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
+import { Dialog } from 'primereact/dialog';
 import { Toast } from 'primereact/toast';
+import CotisationForm from '@/components/CotisationForm';
 
 export default function CotisationsPage() {
   const [cotisations, setCotisations] = useState<Cotisation[]>([]);
@@ -25,7 +20,7 @@ export default function CotisationsPage() {
     try {
       const data = await getCotisations();
       setCotisations(data);
-    } catch {
+    } catch (err) {
       toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Failed to load cotisations' });
     }
   };
@@ -54,10 +49,10 @@ export default function CotisationsPage() {
     }
   };
 
-  const handleSubmit = async (data: Cotisation | Omit<Cotisation, 'id'>) => {
+  const handleSubmit = async (data: Partial<Cotisation> & { memberId: number }) => {
     try {
-      if ('id' in data) {
-        await updateCotisation(data);
+      if ('id' in data && data.id) {
+        await updateCotisation(data.id, data);
         toast.current?.show({ severity: 'success', summary: 'Updated', detail: 'Cotisation updated' });
       } else {
         await createCotisation(data);
@@ -70,11 +65,15 @@ export default function CotisationsPage() {
     }
   };
 
-  const actionTemplate = (row: Cotisation) => (
+  const actionBodyTemplate = (rowData: Cotisation) => (
     <div className="d-flex gap-2">
-      <Button icon="pi pi-pencil" rounded text onClick={() => handleEdit(row)} />
-      <Button icon="pi pi-trash" severity="danger" rounded text onClick={() => handleDelete(row.id)} />
+      <Button icon="pi pi-pencil" rounded text onClick={() => handleEdit(rowData)} />
+      <Button icon="pi pi-trash" severity="danger" rounded text onClick={() => handleDelete(rowData.id)} />
     </div>
+  );
+
+  const amountTemplate = (rowData: Cotisation) => (
+    <span>{Number(rowData.amount).toLocaleString()} MAD</span>
   );
 
   return (
@@ -86,19 +85,17 @@ export default function CotisationsPage() {
       </div>
 
       <DataTable value={cotisations} paginator rows={10} stripedRows>
-        <Column field="amount" header="Amount (MAD)" />
+        <Column field="amount" header="Amount" body={amountTemplate} />
         <Column field="paymentDate" header="Payment Date" />
-        <Column
-          header="Member"
-          body={(row) => `${row.member.firstName} ${row.member.lastName}`}
-        />
-        <Column body={actionTemplate} header="Actions" style={{ width: '8rem' }} />
+        <Column field="member.firstName" header="Member First Name" />
+        <Column field="member.lastName" header="Member Last Name" />
+        <Column body={actionBodyTemplate} header="Actions" style={{ width: '8rem' }} />
       </DataTable>
 
       <Dialog
         visible={showForm}
         onHide={() => setShowForm(false)}
-        header={selectedCotisation ? 'Edit Cotisation' : 'New Cotisation'}
+        header={selectedCotisation ? 'Edit Cotisation' : 'Create Cotisation'}
         style={{ width: '40rem' }}
         modal
       >

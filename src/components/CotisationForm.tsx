@@ -1,53 +1,46 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Cotisation } from '@/types/cotisation';
+import { Cotisation, CotisationRequest } from '@/types/cotisation';
 import { Member } from '@/types/member';
-import { getMembers } from '@/services/memberService';
 import { Calendar } from 'primereact/calendar';
-import { InputNumber } from 'primereact/inputnumber';
 import { Dropdown } from 'primereact/dropdown';
+import { InputNumber } from 'primereact/inputnumber';
 import { Button } from 'primereact/button';
+import { classNames } from 'primereact/utils';
+import { useState, useEffect } from 'react';
 
-interface Props {
+interface CotisationFormProps {
   cotisation?: Cotisation;
-  onSubmit: (data: Omit<Cotisation, 'id'> | Cotisation) => Promise<void>;
+  onSubmit: (data: CotisationRequest) => Promise<void>;
   onCancel: () => void;
+  members: Member[];
 }
 
-const CotisationForm: React.FC<Props> = ({ cotisation, onSubmit, onCancel }) => {
-  const [formData, setFormData] = useState<Omit<Cotisation, 'id'>>({
+export default function CotisationForm({
+  cotisation,
+  onSubmit,
+  onCancel,
+  members,
+}: CotisationFormProps) {
+  const [formData, setFormData] = useState<CotisationRequest>({
     amount: 0,
     paymentDate: new Date().toISOString().split('T')[0],
-    member: {} as Member,
+    memberId: 0,
   });
-
-  const [members, setMembers] = useState<{ label: string; value: number; original: Member }[]>([]);
 
   useEffect(() => {
     if (cotisation) {
-      setFormData(cotisation);
+      setFormData({
+        amount: cotisation.amount,
+        paymentDate: cotisation.paymentDate,
+        memberId: cotisation.member.id,
+      });
     }
   }, [cotisation]);
 
-  useEffect(() => {
-    getMembers().then((data) => {
-      const formatted = data.map((m) => ({
-        label: `${m.firstName} ${m.lastName}`,
-        value: m.id,
-        original: m,
-      }));
-      setMembers(formatted);
-    });
-  }, []);
-
-  const handleChange = (field: keyof typeof formData, value: any) => {
-    setFormData({ ...formData, [field]: value });
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSubmit(cotisation ? { ...cotisation, ...formData } : formData);
+    await onSubmit(formData);
   };
 
   return (
@@ -57,10 +50,11 @@ const CotisationForm: React.FC<Props> = ({ cotisation, onSubmit, onCancel }) => 
         <InputNumber
           id="amount"
           value={formData.amount}
-          onValueChange={(e) => handleChange('amount', e.value || 0)}
-          mode="currency"
+          onValueChange={(e) => setFormData({ ...formData, amount: e.value || 0 })}
+          mode="decimal"
           currency="MAD"
-          locale="fr-MA"
+          locale="en-US"
+          required
         />
       </div>
 
@@ -69,11 +63,9 @@ const CotisationForm: React.FC<Props> = ({ cotisation, onSubmit, onCancel }) => 
         <Calendar
           id="paymentDate"
           value={new Date(formData.paymentDate)}
-          onChange={(e) =>
-            handleChange('paymentDate', (e.value as Date)?.toISOString().split('T')[0] || '')
-          }
-          showIcon
+          onChange={(e) => setFormData({ ...formData, paymentDate: (e.value as Date).toISOString().split('T')[0] })}
           dateFormat="yy-mm-dd"
+          showIcon
         />
       </div>
 
@@ -81,22 +73,21 @@ const CotisationForm: React.FC<Props> = ({ cotisation, onSubmit, onCancel }) => 
         <label htmlFor="member">Member</label>
         <Dropdown
           id="member"
-          value={formData.member?.id}
+          value={formData.memberId}
           options={members}
-          onChange={(e) => {
-            const selected = members.find((m) => m.value === e.value);
-            if (selected) handleChange('member', selected.original);
-          }}
+          optionLabel={(m) => `${m.firstName} ${m.lastName}`}
+          optionValue="id"
+          onChange={(e) => setFormData({ ...formData, memberId: e.value })}
           placeholder="Select Member"
+          filter
+          className={classNames({ 'p-invalid': !formData.memberId })}
         />
       </div>
 
       <div className="d-flex justify-content-end gap-2 mt-3">
-        <Button type="button" label="Cancel" severity="secondary" onClick={onCancel} />
-        <Button type="submit" label={cotisation ? 'Update' : 'Create'} />
+        <Button label="Cancel" type="button" severity="secondary" onClick={onCancel} />
+        <Button label={cotisation ? 'Update' : 'Create'} type="submit" />
       </div>
     </form>
   );
-};
-
-export default CotisationForm;
+}

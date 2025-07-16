@@ -6,3 +6,9 @@ export interface Cotisation {
   paymentDate: string;
   member: Member;
 }
+
+export interface CotisationRequest {
+  amount: number;
+  paymentDate: string;
+  memberId: number;
+}

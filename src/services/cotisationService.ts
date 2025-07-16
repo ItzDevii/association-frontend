@@ -1,18 +1,18 @@
+import { Cotisation, CotisationRequest } from '@/types/cotisation';
 import api from './axios';
-import { Cotisation } from '@/types/cotisation';
 
 export const getCotisations = async (): Promise<Cotisation[]> => {
   const res = await api.get('/cotisations');
   return res.data;
 };
 
-export const createCotisation = async (data: Omit<Cotisation, 'id'>): Promise<Cotisation> => {
+export const createCotisation = async (data: CotisationRequest): Promise<Cotisation> => {
   const res = await api.post('/cotisations', data);
   return res.data;
 };
 
-export const updateCotisation = async (data: Cotisation): Promise<Cotisation> => {
-  const res = await api.put(`/cotisations/${data.id}`, data);
+export const updateCotisation = async (id: number, data: CotisationRequest): Promise<Cotisation> => {
+  const res = await api.put(`/cotisations/${id}`, data);
   return res.data;
 };
 

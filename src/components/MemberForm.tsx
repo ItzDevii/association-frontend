@@ -12,60 +12,51 @@ import { classNames } from 'primereact/utils';
 
 interface MemberFormProps {
   member?: Member;
-  onSubmit: (data: Partial<Member> & { userId: number }) => Promise<void>;
+  onSubmit: (data: Omit<Member, 'id'> | Member) => Promise<void>;
   onCancel: () => void;
 }
 
 const MemberForm: React.FC<MemberFormProps> = ({ member, onSubmit, onCancel }) => {
-  const [formData, setFormData] = useState<Omit<Member, 'id'> & { userId: number | null }>({
+  const [formData, setFormData] = useState<Omit<Member, 'id'>>({
     firstName: '',
     lastName: '',
     joinDate: new Date().toISOString().split('T')[0],
     status: 'ACTIVE',
     user: { id: 0, username: '', role: 'MEMBER' },
-    userId: null,
   });
 
   const [users, setUsers] = useState<User[]>([]);
+  const [userInvalid, setUserInvalid] = useState(false);
 
   useEffect(() => {
     if (member) {
-      setFormData({
-        ...member,
-        userId: member.user?.id || null,
-      });
+      setFormData({ ...member });
     }
   }, [member]);
 
   useEffect(() => {
     const fetchUsers = async () => {
-      const result = await getUsers();
-      setUsers(result);
+      try {
+        const userList = await getUsers();
+        setUsers(userList);
+      } catch (error) {
+        console.error('Failed to load users:', error);
+      }
     };
     fetchUsers();
   }, []);
 
   const handleChange = (field: keyof typeof formData, value: any) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData({ ...formData, [field]: value });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (formData.userId == null) {
-      return alert('Please select a user');
+    if (!formData.user || !formData.user.id) {
+      setUserInvalid(true);
+      return;
     }
-
-    const payload = {
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      joinDate: formData.joinDate,
-      status: formData.status,
-      userId: formData.userId,
-      ...(member?.id && { id: member.id }),
-    };
-
-    await onSubmit(payload);
+    await onSubmit(member ? { ...member, ...formData } : formData);
   };
 
   return (
@@ -100,6 +91,7 @@ const MemberForm: React.FC<MemberFormProps> = ({ member, onSubmit, onCancel }) =
           }
           dateFormat="yy-mm-dd"
           showIcon
+          required
         />
       </div>
 
@@ -111,22 +103,32 @@ const MemberForm: React.FC<MemberFormProps> = ({ member, onSubmit, onCancel }) =
           options={['ACTIVE', 'INACTIVE', 'SUSPENDED']}
           onChange={(e) => handleChange('status', e.value)}
           placeholder="Select Status"
+          required
         />
       </div>
 
       <div className="mb-3">
-        <label htmlFor="userId">User</label>
+        <label htmlFor="user">User</label>
         <Dropdown
-          id="userId"
-          value={formData.userId}
+          id="user"
+          value={formData.user?.id}
           options={users}
           optionLabel="username"
           optionValue="id"
-          onChange={(e) => handleChange('userId', e.value)}
+          onChange={(e) => {
+            const selectedUser = users.find((u) => u.id === e.value);
+            setUserInvalid(false);
+            if (selectedUser) {
+              handleChange('user', selectedUser);
+            }
+          }}
           placeholder="Select User"
           filter
-          className={classNames({ 'p-invalid': formData.userId === null })}
+          className={classNames({ 'p-invalid': userInvalid })}
         />
+        {userInvalid && (
+          <small className="p-error">User is required</small>
+        )}
       </div>
 
       <div className="d-flex justify-content-end gap-2 mt-3">
