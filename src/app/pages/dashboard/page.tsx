@@ -1,73 +1,104 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/context/KeycloakContext';
 import { getMembers } from '@/services/memberService';
-import { getActivities } from '@/services/activityService';
 import { getCotisations } from '@/services/cotisationService';
-import MonthlyCotisationsChart from '@/components/MonthlyCotisationsChart';
-import RecentMembers from '@/components/RecentMembers';
-
-import { Member } from '@/types/Member';
-import { Activity } from '@/types/activity';
+import { getActivities } from '@/services/activityService';
+import { Member } from '@/types/member';
 import { Cotisation } from '@/types/cotisation';
+import { Activity } from '@/types/activity';
+import { Card } from 'primereact/card';
+import { Chart } from 'primereact/chart';
 
 const DashboardPage = () => {
-  const { token } = useAuth();
-
   const [members, setMembers] = useState<Member[]>([]);
-  const [activities, setActivities] = useState<Activity[]>([]);
   const [cotisations, setCotisations] = useState<Cotisation[]>([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [monthlyData, setMonthlyData] = useState<number[]>([]);
 
   useEffect(() => {
-    if (token) {
-      getMembers(token)
-        .then((data) => setMembers(data))
-        .catch(() => setMembers([]));
+    const fetchData = async () => {
+      const membersData = await getMembers();
+      const cotisationsData = await getCotisations();
+      const activitiesData = await getActivities();
 
-      getActivities(token)
-        .then((data) => setActivities(data))
-        .catch(() => setActivities([]));
+      setMembers(membersData);
+      setCotisations(cotisationsData);
+      setActivities(activitiesData);
 
-      getCotisations(token)
-        .then((data) => setCotisations(data))
-        .catch(() => setCotisations([]));
-    }
-  }, [token]);
+      const monthlyTotals = Array(12).fill(0);
+      cotisationsData.forEach(c => {
+        const month = new Date(c.paymentDate).getMonth();
+        monthlyTotals[month] += c.amount;
+      });
+      setMonthlyData(monthlyTotals);
+    };
+
+    fetchData();
+  }, []);
+
+  const barData = {
+    labels: [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ],
+    datasets: [
+      {
+        label: 'Monthly Cotisations (MAD)',
+        backgroundColor: '#0d6efd',
+        data: monthlyData,
+      },
+    ],
+  };
+
+  const barOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        display: true,
+        position: 'top' as const,
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          callback: (value: number) => `${value.toLocaleString()} MAD`,
+        },
+      },
+    },
+  };
 
   return (
-    <div>
-      <h2 className="fw-bold text-primary mb-4">Dashboard</h2>
+    <div className="container">
+      <h2 className="mb-4">Dashboard</h2>
 
-      {/* Summary Cards */}
-      <div className="row g-4 mb-4">
+      <div className="row mb-4">
         <div className="col-md-4">
-          <div className="card shadow-sm border-0 rounded p-4">
-            <h5 className="text-secondary">Total Members</h5>
-            <h3 className="fw-bold text-dark">{members.length}</h3>
-          </div>
+          <Card title="Total Members" className="text-center">
+            <h3>{members.length}</h3>
+          </Card>
         </div>
         <div className="col-md-4">
-          <div className="card shadow-sm border-0 rounded p-4">
-            <h5 className="text-secondary">Active Activities</h5>
-            <h3 className="fw-bold text-dark">{activities.length}</h3>
-          </div>
+          <Card title="Total Cotisations" className="text-center">
+            <h3>
+              {cotisations
+                .reduce((sum, c) => sum + c.amount, 0)
+                .toLocaleString()}{' '}
+              MAD
+            </h3>
+          </Card>
         </div>
         <div className="col-md-4">
-          <div className="card shadow-sm border-0 rounded p-4">
-            <h5 className="text-secondary">Total Cotisations</h5>
-            <h3 className="fw-bold text-dark">{cotisations.length}</h3>
-          </div>
+          <Card title="Total Activities" className="text-center">
+            <h3>{activities.length}</h3>
+          </Card>
         </div>
       </div>
 
-      {/* Monthly Cotisation Chart */}
-      <div className="mb-4">
-        <MonthlyCotisationsChart cotisations={cotisations} />
-      </div>
-
-      {/* Recent Members List */}
-      <RecentMembers members={members} />
+      <Card title="Cotisations by Month">
+        <Chart type="bar" data={barData} options={barOptions} />
+      </Card>
     </div>
   );
 };

@@ -2,7 +2,6 @@
 
 import Sidebar from './Sidebar';
 import { useAuth } from '@/context/KeycloakContext';
-import 'bootstrap/dist/js/bootstrap.bundle.min';
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const { logout, username } = useAuth();

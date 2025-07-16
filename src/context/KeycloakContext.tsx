@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import Keycloak from 'keycloak-js';
+import { setAuthToken } from '@/authToken';
 
 const keycloak = new Keycloak({
   url: 'http://localhost:8080',
@@ -32,7 +33,7 @@ const AuthContext = createContext<AuthContextType>({
 export const useAuth = () => useContext(AuthContext);
 
 export const KeycloakProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [token, setToken] = useState<string | null>(null);
+  const [token, setTokenState] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
@@ -49,18 +50,19 @@ export const KeycloakProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setInitialized(true);
 
         if (auth && keycloak.token) {
-          setToken(keycloak.token);
+          setTokenState(keycloak.token);
+          setAuthToken(keycloak.token); // ✅ store globally
 
-          // Decode username from token
           const payload = JSON.parse(atob(keycloak.token.split('.')[1]));
           setUsername(payload?.preferred_username || null);
         }
 
-        // Token refresh
         keycloak.onTokenExpired = () => {
           keycloak.updateToken(60).then((refreshed) => {
             if (refreshed && keycloak.token) {
-              setToken(keycloak.token);
+              setTokenState(keycloak.token);
+              setAuthToken(keycloak.token); // ✅ refresh global token
+
               const payload = JSON.parse(atob(keycloak.token.split('.')[1]));
               setUsername(payload?.preferred_username || null);
             }
