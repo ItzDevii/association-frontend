@@ -1,10 +1,7 @@
-import { User } from './user';
-
 export interface Member {
-  id: number;
+  id?: number;
   firstName: string;
   lastName: string;
-  joinDate: string; // ISO Date
+  joinDate: string;
   status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
-  user: User;
 }

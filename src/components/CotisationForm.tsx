@@ -1,20 +1,33 @@
 'use client';
 
-import { Cotisation, CotisationRequest } from '@/types/cotisation';
+import { useEffect, useState } from 'react';
+import { Cotisation } from '@/types/cotisation';
 import { Member } from '@/types/member';
+
 import { Calendar } from 'primereact/calendar';
 import { Dropdown } from 'primereact/dropdown';
 import { InputNumber } from 'primereact/inputnumber';
 import { Button } from 'primereact/button';
-import { classNames } from 'primereact/utils';
-import { useState, useEffect } from 'react';
+import '@/styles/shared/FormButtons.css';
 
 interface CotisationFormProps {
   cotisation?: Cotisation;
-  onSubmit: (data: CotisationRequest) => Promise<void>;
+  onSubmit: (data: Cotisation) => Promise<void>;
   onCancel: () => void;
   members: Member[];
 }
+
+const formatDateToLocalString = (date: Date): string => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
+const parseDateFromString = (str: string): Date => {
+  const [y, m, d] = str.split('-').map(Number);
+  return new Date(y, m - 1, d);
+};
 
 export default function CotisationForm({
   cotisation,
@@ -22,25 +35,36 @@ export default function CotisationForm({
   onCancel,
   members,
 }: CotisationFormProps) {
-  const [formData, setFormData] = useState<CotisationRequest>({
-    amount: 0,
-    paymentDate: new Date().toISOString().split('T')[0],
-    memberId: 0,
-  });
+  const [amount, setAmount] = useState<number>(0);
+  const [paymentDate, setPaymentDate] = useState<Date>(new Date());
+  const [memberId, setMemberId] = useState<number | null>(null);
+  const [memberError, setMemberError] = useState(false);
 
   useEffect(() => {
     if (cotisation) {
-      setFormData({
-        amount: cotisation.amount,
-        paymentDate: cotisation.paymentDate,
-        memberId: cotisation.member.id,
-      });
+      setAmount(cotisation.amount);
+      setPaymentDate(parseDateFromString(cotisation.paymentDate));
+      setMemberId(cotisation.memberId);
+    } else if (members.length > 0) {
+      setMemberId(members[0].id!);
     }
-  }, [cotisation]);
+  }, [cotisation, members]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSubmit(formData);
+    if (memberId === null) {
+      setMemberError(true);
+      return;
+    }
+
+    const payload: Cotisation = {
+      ...(cotisation || {}),
+      amount,
+      paymentDate: formatDateToLocalString(paymentDate),
+      memberId,
+    };
+
+    await onSubmit(payload);
   };
 
   return (
@@ -49,11 +73,11 @@ export default function CotisationForm({
         <label htmlFor="amount">Amount</label>
         <InputNumber
           id="amount"
-          value={formData.amount}
-          onValueChange={(e) => setFormData({ ...formData, amount: e.value || 0 })}
+          value={amount}
+          onValueChange={(e) => setAmount(e.value ?? 0)}
           mode="decimal"
           currency="MAD"
-          locale="en-US"
+          locale="fr-MA"
           required
         />
       </div>
@@ -62,10 +86,11 @@ export default function CotisationForm({
         <label htmlFor="paymentDate">Payment Date</label>
         <Calendar
           id="paymentDate"
-          value={new Date(formData.paymentDate)}
-          onChange={(e) => setFormData({ ...formData, paymentDate: (e.value as Date).toISOString().split('T')[0] })}
+          value={paymentDate}
+          onChange={(e) => setPaymentDate(e.value as Date)}
           dateFormat="yy-mm-dd"
           showIcon
+          required
         />
       </div>
 
@@ -73,20 +98,34 @@ export default function CotisationForm({
         <label htmlFor="member">Member</label>
         <Dropdown
           id="member"
-          value={formData.memberId}
+          value={memberId}
           options={members}
-          optionLabel={(m) => `${m.firstName} ${m.lastName}`}
           optionValue="id"
-          onChange={(e) => setFormData({ ...formData, memberId: e.value })}
+          optionLabel="firstName"
+          onChange={(e) => {
+            setMemberId(e.value);
+            setMemberError(false);
+          }}
+          itemTemplate={(m: Member) => <span>{m.firstName} {m.lastName}</span>}
+          valueTemplate={() => {
+            const selected = members.find((m) => m.id === memberId);
+            return selected ? (
+              <span>{selected.firstName} {selected.lastName}</span>
+            ) : (
+              <span>Select Member</span>
+            );
+          }}
           placeholder="Select Member"
           filter
-          className={classNames({ 'p-invalid': !formData.memberId })}
+          className={memberError ? 'p-invalid' : ''}
+          required
         />
+        {memberError && <small className="p-error">Member is required</small>}
       </div>
 
-      <div className="d-flex justify-content-end gap-2 mt-3">
-        <Button label="Cancel" type="button" severity="secondary" onClick={onCancel} />
-        <Button label={cotisation ? 'Update' : 'Create'} type="submit" />
+      <div className="form-buttons">
+        <Button label="Cancel" type="button" className="p-button-danger" onClick={onCancel} />
+        <Button label={cotisation ? 'Update' : 'Create'} type="submit" className="p-button-success" />
       </div>
     </form>
   );

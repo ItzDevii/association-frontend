@@ -12,6 +12,7 @@ const Sidebar = () => {
     { href: '/pages/members', label: 'Members' },
     { href: '/pages/activities', label: 'Activities' },
     { href: '/pages/cotisations', label: 'Cotisations' },
+    {href: '/pages/documents', label: 'Documents' }
   ];
 
   return (

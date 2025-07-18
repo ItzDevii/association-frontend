@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Member } from '@/types/member';
 import {
   getMembers,
@@ -15,9 +15,8 @@ import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { Dialog } from 'primereact/dialog';
 import { Toast } from 'primereact/toast';
-import { useRef } from 'react';
 
-export default function MembersPage() {
+export default function MemberPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -27,7 +26,7 @@ export default function MembersPage() {
     try {
       const data = await getMembers();
       setMembers(data);
-    } catch (err) {
+    } catch {
       toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Failed to load members' });
     }
   };
@@ -58,11 +57,11 @@ export default function MembersPage() {
 
   const handleSubmit = async (data: Omit<Member, 'id'> | Member) => {
     try {
-      if ('id' in data) {
+      if ('id' in data && data.id) {
         await updateMember(data);
         toast.current?.show({ severity: 'success', summary: 'Updated', detail: 'Member updated' });
       } else {
-        await createMember(data);
+        await createMember(data as Omit<Member, 'id'>);
         toast.current?.show({ severity: 'success', summary: 'Created', detail: 'Member created' });
       }
       setShowForm(false);
@@ -75,7 +74,7 @@ export default function MembersPage() {
   const actionBodyTemplate = (rowData: Member) => (
     <div className="d-flex gap-2">
       <Button icon="pi pi-pencil" rounded text onClick={() => handleEdit(rowData)} />
-      <Button icon="pi pi-trash" severity="danger" rounded text onClick={() => handleDelete(rowData.id)} />
+      <Button icon="pi pi-trash" severity="danger" rounded text onClick={() => handleDelete(rowData.id!)} />
     </div>
   );
 
@@ -84,7 +83,7 @@ export default function MembersPage() {
       <Toast ref={toast} />
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h2>Members</h2>
-        <Button label="Create Member" icon="pi pi-plus" onClick={handleCreate} />
+        <Button label="New Member" icon="pi pi-plus" onClick={handleCreate} />
       </div>
 
       <DataTable value={members} paginator rows={10} stripedRows>
@@ -92,7 +91,6 @@ export default function MembersPage() {
         <Column field="lastName" header="Last Name" />
         <Column field="joinDate" header="Join Date" />
         <Column field="status" header="Status" />
-        <Column field="user.username" header="User" />
         <Column body={actionBodyTemplate} header="Actions" style={{ width: '8rem' }} />
       </DataTable>
 
@@ -103,7 +101,11 @@ export default function MembersPage() {
         style={{ width: '40rem' }}
         modal
       >
-        <MemberForm member={selectedMember ?? undefined} onSubmit={handleSubmit} onCancel={() => setShowForm(false)} />
+        <MemberForm
+          member={selectedMember ?? undefined}
+          onSubmit={handleSubmit}
+          onCancel={() => setShowForm(false)}
+        />
       </Dialog>
     </div>
   );

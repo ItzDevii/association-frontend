@@ -1,8 +1,9 @@
 import { Member } from './member';
 
 export interface Document {
-  id: number;
+  id?: number;
   name: string;
   url: string;
-  member: Member;
+  memberId: number;
+  member?: Member;
 }

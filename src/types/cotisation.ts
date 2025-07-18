@@ -1,13 +1,5 @@
-import { Member } from './member';
-
 export interface Cotisation {
-  id: number;
-  amount: number;
-  paymentDate: string;
-  member: Member;
-}
-
-export interface CotisationRequest {
+  id?: number;
   amount: number;
   paymentDate: string;
   memberId: number;

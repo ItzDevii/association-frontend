@@ -4,101 +4,98 @@ import { useEffect, useState } from 'react';
 import { Document } from '@/types/document';
 import { Member } from '@/types/member';
 import { getMembers } from '@/services/memberService';
-import { InputText } from 'primereact/inputtext';
 import { Dropdown } from 'primereact/dropdown';
+import { InputText } from 'primereact/inputtext';
 import { Button } from 'primereact/button';
 
-interface Props {
+interface DocumentFormProps {
   document?: Document;
-  onSubmit: (data: Document | Omit<Document, 'id'>) => Promise<void>;
+  onSubmit: (data: Document) => void;
   onCancel: () => void;
 }
 
-const DocumentForm: React.FC<Props> = ({ document, onSubmit, onCancel }) => {
-  const [formData, setFormData] = useState<Omit<Document, 'id'>>({
-    name: '',
-    url: '',
-    member: {} as Member,
-  });
-
-  const [members, setMembers] = useState<{ label: string; value: number; original: Member }[]>([]);
+export default function DocumentForm({ document, onSubmit, onCancel }: DocumentFormProps) {
+  const [name, setName] = useState(document?.name ?? '');
+  const [url, setUrl] = useState(document?.url ?? '');
+  const [member, setMember] = useState<Member | null>(document?.member ?? null);
+  const [members, setMembers] = useState<(Member & { fullName: string })[]>([]);
 
   useEffect(() => {
-    if (document) {
-      setFormData({
-        name: document.name,
-        url: document.url,
-        member: document.member,
-      });
-    }
-  }, [document]);
-
-  useEffect(() => {
-    getMembers().then((data) => {
-      const formatted = data.map((m) => ({
-        label: `${m.firstName} ${m.lastName}`,
-        value: m.id,
-        original: m,
+    const fetchMembers = async () => {
+      const result = await getMembers();
+      const withFullName = result.map((m) => ({
+        ...m,
+        fullName: `${m.firstName} ${m.lastName}`
       }));
-      setMembers(formatted);
-    });
+      setMembers(withFullName);
+    };
+
+    fetchMembers();
   }, []);
 
-  const handleChange = (field: keyof typeof formData, value: any) => {
-    setFormData({ ...formData, [field]: value });
-  };
+  const handleSubmit = () => {
+    if (!member || member.id == null) return;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (document) {
-      await onSubmit({ ...document, ...formData });
-    } else {
-      await onSubmit(formData);
+    const payload: Document = {
+      name,
+      url,
+      memberId: member.id
+    };
+
+    if (document?.id != null) {
+      payload.id = document.id;
     }
+
+    onSubmit(payload);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-fluid">
+    <div className="card p-4" style={{ maxWidth: '600px', margin: '0 auto' }}>
       <div className="mb-3">
-        <label htmlFor="name">Document Name</label>
+        <label htmlFor="name" className="form-label">Name</label>
         <InputText
           id="name"
-          value={formData.name}
-          onChange={(e) => handleChange('name', e.target.value)}
-          required
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full"
         />
       </div>
 
       <div className="mb-3">
-        <label htmlFor="url">Document URL</label>
+        <label htmlFor="url" className="form-label">URL</label>
         <InputText
           id="url"
-          value={formData.url}
-          onChange={(e) => handleChange('url', e.target.value)}
-          required
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          className="w-full"
         />
       </div>
 
       <div className="mb-3">
-        <label htmlFor="member">Member</label>
+        <label htmlFor="member" className="form-label">Member</label>
         <Dropdown
           id="member"
-          value={formData.member?.id}
+          value={member}
           options={members}
-          onChange={(e) => {
-            const selected = members.find((m) => m.value === e.value);
-            if (selected) handleChange('member', selected.original);
-          }}
-          placeholder="Select Member"
+          optionLabel="fullName"
+          onChange={(e) => setMember(e.value)}
+          placeholder="Select a member"
+          className="w-full"
         />
       </div>
 
       <div className="d-flex justify-content-end gap-2 mt-3">
-        <Button type="button" label="Cancel" severity="secondary" onClick={onCancel} />
-        <Button type="submit" label={document ? 'Update' : 'Create'} />
+        <Button
+          label="Cancel"
+          className="p-button-secondary"
+          onClick={onCancel}
+        />
+        <Button
+          label="Save"
+          onClick={handleSubmit}
+          disabled={!member || member.id == null}
+        />
       </div>
-    </form>
+    </div>
   );
-};
-
-export default DocumentForm;
+}
