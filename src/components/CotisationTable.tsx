@@ -1,7 +1,7 @@
 'use client';
 
 import { Cotisation } from '@/types/cotisation';
-import { Member } from '@/types/Member';
+import { Member } from '@/types/member';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 
@@ -15,7 +15,7 @@ interface Props {
 const CotisationTable: React.FC<Props> = ({ cotisations, members, onEdit, onDelete }) => {
   const getMemberName = (memberId: number) => {
     const member = members.find((m) => m.id === memberId);
-    return member ? member.name : 'Unknown';
+    return member ? `${member.firstName} ${member.lastName}` : 'Unknown';
   };
 
   const actionTemplate = (rowData: Cotisation) => (

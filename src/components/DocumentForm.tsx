@@ -3,99 +3,124 @@
 import { useEffect, useState } from 'react';
 import { Document } from '@/types/document';
 import { Member } from '@/types/member';
-import { getMembers } from '@/services/memberService';
-import { Dropdown } from 'primereact/dropdown';
+
 import { InputText } from 'primereact/inputtext';
+import { Dropdown } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
+import '@/styles/shared/FormButtons.css';
 
 interface DocumentFormProps {
   document?: Document;
-  onSubmit: (data: Document) => void;
+  onSubmit: (data: Document | Omit<Document, 'id'>) => Promise<void>;
   onCancel: () => void;
+  members: Member[];
 }
 
-export default function DocumentForm({ document, onSubmit, onCancel }: DocumentFormProps) {
-  const [name, setName] = useState(document?.name ?? '');
-  const [url, setUrl] = useState(document?.url ?? '');
-  const [member, setMember] = useState<Member | null>(document?.member ?? null);
-  const [members, setMembers] = useState<(Member & { fullName: string })[]>([]);
+export default function DocumentForm({
+  document,
+  onSubmit,
+  onCancel,
+  members,
+}: DocumentFormProps) {
+  const [name, setName] = useState('');
+  const [url, setUrl] = useState('');
+  const [memberId, setMemberId] = useState<number | null>(null);
+  const [memberError, setMemberError] = useState(false);
 
   useEffect(() => {
-    const fetchMembers = async () => {
-      const result = await getMembers();
-      const withFullName = result.map((m) => ({
-        ...m,
-        fullName: `${m.firstName} ${m.lastName}`
-      }));
-      setMembers(withFullName);
-    };
+    if (document) {
+      setName(document.name);
+      setUrl(document.url);
+      setMemberId(document.memberId ?? document.member?.id ?? null);
+    } else if (members.length > 0) {
+      setMemberId(members[0].id!);
+    }
+  }, [document, members]);
 
-    fetchMembers();
-  }, []);
-
-  const handleSubmit = () => {
-    if (!member || member.id == null) return;
-
-    const payload: Document = {
-      name,
-      url,
-      memberId: member.id
-    };
-
-    if (document?.id != null) {
-      payload.id = document.id;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (memberId === null) {
+      setMemberError(true);
+      return;
     }
 
-    onSubmit(payload);
+    const payload: Document = {
+      ...(document || {}),
+      name,
+      url,
+      memberId,
+    };
+
+    await onSubmit(payload);
   };
 
   return (
-    <div className="card p-4" style={{ maxWidth: '600px', margin: '0 auto' }}>
+    <form onSubmit={handleSubmit} className="p-fluid">
       <div className="mb-3">
-        <label htmlFor="name" className="form-label">Name</label>
+        <label htmlFor="name">Name</label>
         <InputText
           id="name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full"
+          required
         />
       </div>
 
       <div className="mb-3">
-        <label htmlFor="url" className="form-label">URL</label>
+        <label htmlFor="url">URL</label>
         <InputText
           id="url"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          className="w-full"
+          required
         />
+        {url && (
+          <div className="mt-2">
+            <a
+              href={url.startsWith('http://') || url.startsWith('https://') ? url : `https://${url}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: '#0d6efd', textDecoration: 'underline', wordBreak: 'break-word' }}
+            >
+              {url}
+            </a>
+          </div>
+        )}
       </div>
 
       <div className="mb-3">
-        <label htmlFor="member" className="form-label">Member</label>
+        <label htmlFor="member">Member</label>
         <Dropdown
           id="member"
-          value={member}
+          value={memberId}
           options={members}
-          optionLabel="fullName"
-          onChange={(e) => setMember(e.value)}
-          placeholder="Select a member"
-          className="w-full"
+          optionValue="id"
+          optionLabel="firstName"
+          onChange={(e) => {
+            setMemberId(e.value);
+            setMemberError(false);
+          }}
+          itemTemplate={(m: Member) => <span>{m.firstName} {m.lastName}</span>}
+          valueTemplate={() => {
+            const selected = members.find((m) => m.id === memberId);
+            return selected ? (
+              <span>{selected.firstName} {selected.lastName}</span>
+            ) : (
+              <span>Select Member</span>
+            );
+          }}
+          placeholder="Select Member"
+          filter
+          className={memberError ? 'p-invalid' : ''}
+          required
         />
+        {memberError && <small className="p-error">Member is required</small>}
       </div>
 
-      <div className="d-flex justify-content-end gap-2 mt-3">
-        <Button
-          label="Cancel"
-          className="p-button-secondary"
-          onClick={onCancel}
-        />
-        <Button
-          label="Save"
-          onClick={handleSubmit}
-          disabled={!member || member.id == null}
-        />
+      <div className="form-buttons">
+        <Button label="Cancel" type="button" className="p-button-danger" onClick={onCancel} />
+        <Button label={document ? 'Update' : 'Create'} type="submit" className="p-button-success" />
       </div>
-    </div>
+    </form>
   );
 }

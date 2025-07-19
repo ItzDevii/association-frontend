@@ -2,42 +2,36 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import clsx from 'clsx';
+import { FaTachometerAlt, FaUsers, FaClipboardList, FaMoneyBillWave, FaFileAlt } from 'react-icons/fa';
 
-const Sidebar = () => {
+const navItems = [
+  { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/pages/dashboard' },
+  { label: 'Members', icon: <FaUsers />, path: '/pages/members' },
+  { label: 'Activities', icon: <FaClipboardList />, path: '/pages/activities' },
+  { label: 'Cotisations', icon: <FaMoneyBillWave />, path: '/pages/cotisations' },
+  { label: 'Documents', icon: <FaFileAlt />, path: '/pages/documents' },
+];
+
+export default function Sidebar() {
   const pathname = usePathname();
 
-  const links = [
-    { href: '/pages/dashboard', label: 'Dashboard' },
-    { href: '/pages/members', label: 'Members' },
-    { href: '/pages/activities', label: 'Activities' },
-    { href: '/pages/cotisations', label: 'Cotisations' },
-    {href: '/pages/documents', label: 'Documents' }
-  ];
-
   return (
-    <aside className="sidebar d-flex flex-column h-100">
-      <div className="mb-4">
-        <h4 className="text-primary fw-bold">Association Manager</h4>
-      </div>
-
-      <ul className="nav flex-column">
-        {links.map(({ href, label }) => (
-          <li className="nav-item mb-2" key={href}>
-            <Link
-              href={href}
-              className={clsx(
-                'sidebar-link',
-                pathname === href && 'active'
-              )}
-            >
-              {label}
-            </Link>
-          </li>
+    <aside className="sidebar">
+      <h4>Association Manager</h4>
+      <nav className="d-flex flex-column gap-1">
+        {navItems.map((item) => (
+          <Link
+            key={item.path}
+            href={item.path}
+            className={`sidebar-link d-flex align-items-center gap-2 ${
+              pathname === item.path ? 'active' : ''
+            }`}
+          >
+            {item.icon}
+            {item.label}
+          </Link>
         ))}
-      </ul>
+      </nav>
     </aside>
   );
-};
-
-export default Sidebar;
+}

@@ -1,39 +1,48 @@
 /* GLOBAL RESET */
-body {
+* {
+  box-sizing: border-box;
   margin: 0;
-  background-color: #f8f9fa;
+  padding: 0;
+}
+
+body {
   font-family: 'Segoe UI', sans-serif;
+  background-color: #f5f7fa;
   color: #212529;
+  line-height: 1.6;
 }
 
 /* SIDEBAR */
 .sidebar {
   background-color: #ffffff;
   border-right: 1px solid #dee2e6;
-  padding: 1.5rem 1rem;
+  padding: 2rem 1rem;
   min-height: 100vh;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.05);
 }
 
 .sidebar h4 {
-  font-size: 1.25rem;
+  font-size: 1.4rem;
   font-weight: 700;
   margin-bottom: 2rem;
   color: #0d6efd;
 }
 
 .sidebar-link {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   padding: 10px 14px;
-  color: #333;
+  color: #495057;
   border-radius: 6px;
   font-weight: 500;
   text-decoration: none;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .sidebar-link:hover {
   background-color: #f1f3f5;
-  text-decoration: none;
+  color: #0d6efd;
 }
 
 .sidebar-link.active {
@@ -42,12 +51,51 @@ body {
   background-color: #eaf3ff;
 }
 
-/* HEADERS */
-h2 {
-  font-size: 1.75rem;
+/* HEADER */
+.header-user {
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 6px 12px;
+  background-color: #ffffff;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.header-user:hover {
+  background-color: #f8f9fa;
+}
+
+.dropdown-menu {
+  border-radius: 6px !important;
+  min-width: 180px;
+  font-size: 0.95rem;
+}
+
+/* DASHBOARD CARDS */
+.dashboard-card {
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
+  padding: 1.5rem;
+  text-align: center;
+  transition: transform 0.2s ease;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-4px);
+}
+
+.dashboard-card h5 {
+  font-size: 1.2rem;
   font-weight: 600;
-  margin-bottom: 1.5rem;
-  color: #212529;
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+.dashboard-card span {
+  font-size: 1.75rem;
+  font-weight: bold;
+  color: #0d6efd;
 }
 
 /* FORMS */
@@ -58,7 +106,7 @@ select.form-select {
   border-radius: 6px;
   border: 1px solid #ced4da;
   box-shadow: none;
-  transition: border-color 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 input.form-control:focus,
@@ -78,6 +126,7 @@ button.btn {
 button.btn-primary {
   background-color: #0d6efd;
   border-color: #0d6efd;
+  color: #fff;
 }
 
 button.btn-primary:hover {
@@ -94,14 +143,15 @@ button.btn-warning {
 button.btn-danger {
   background-color: #dc3545;
   border-color: #dc3545;
+  color: #fff;
 }
 
-/* DATATABLE (PRIMEREACT) */
+/* DATATABLE */
 .p-datatable {
   border-radius: 8px;
   background-color: #fff;
   overflow: hidden;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .p-datatable .p-datatable-thead > tr > th {
@@ -115,7 +165,7 @@ button.btn-danger {
   padding: 12px;
 }
 
-/* DIALOG / MODAL */
+/* DIALOG */
 .p-dialog {
   border-radius: 10px;
 }
@@ -125,7 +175,7 @@ button.btn-danger {
   background-color: #f8f9fa;
 }
 
-/* TOASTS */
+/* TOAST */
 .p-toast {
   z-index: 9999;
 }
@@ -133,4 +183,57 @@ button.btn-danger {
 .p-toast-message {
   border-radius: 6px;
   font-weight: 500;
+}
+
+/* DASHBOARD HEADER */
+.dashboard-header {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 2rem;
+  color: #212529;
+}
+
+/* DASHBOARD CARD WRAPPER */
+.dashboard-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+/* INDIVIDUAL DASHBOARD CARD */
+.dashboard-card {
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  text-align: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.dashboard-card h5 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #6c757d;
+  margin-bottom: 0.75rem;
+}
+
+.dashboard-card p {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #343a40;
+  margin: 0;
+}
+
+/* CHART SECTION */
+.dashboard-chart {
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }

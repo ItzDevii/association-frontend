@@ -1,13 +1,15 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Document } from '@/types/document';
+import { Member } from '@/types/member';
 import {
   getDocuments,
   createDocument,
   updateDocument,
-  deleteDocument
+  deleteDocument,
 } from '@/services/documentService';
+import { getMembers } from '@/services/memberService';
 
 import DocumentForm from '@/components/DocumentForm';
 import { DataTable } from 'primereact/datatable';
@@ -18,6 +20,7 @@ import { Toast } from 'primereact/toast';
 
 export default function DocumentPage() {
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [showForm, setShowForm] = useState(false);
   const toast = useRef<Toast>(null);
@@ -27,12 +30,30 @@ export default function DocumentPage() {
       const data = await getDocuments();
       setDocuments(data);
     } catch {
-      toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Failed to load documents' });
+      toast.current?.show({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Failed to load documents',
+      });
+    }
+  };
+
+  const loadMembers = async () => {
+    try {
+      const data = await getMembers();
+      setMembers(data);
+    } catch {
+      toast.current?.show({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Failed to load members',
+      });
     }
   };
 
   useEffect(() => {
     loadDocuments();
+    loadMembers();
   }, []);
 
   const handleCreate = () => {
@@ -48,48 +69,76 @@ export default function DocumentPage() {
   const handleDelete = async (id: number) => {
     try {
       await deleteDocument(id);
-      toast.current?.show({ severity: 'success', summary: 'Deleted', detail: 'Document deleted' });
+      toast.current?.show({
+        severity: 'success',
+        summary: 'Deleted',
+        detail: 'Document deleted',
+      });
       loadDocuments();
     } catch {
-      toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Delete failed' });
+      toast.current?.show({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Delete failed',
+      });
     }
   };
 
-  const handleSubmit = async (data: Document) => {
+  const handleSubmit = async (data: Document | Omit<Document, 'id'>) => {
     try {
-      if (data.id !== undefined) {
+      if ('id' in data && data.id) {
         await updateDocument(data);
-        toast.current?.show({ severity: 'success', summary: 'Updated', detail: 'Document updated' });
+        toast.current?.show({
+          severity: 'success',
+          summary: 'Updated',
+          detail: 'Document updated',
+        });
       } else {
-        await createDocument(data);
-        toast.current?.show({ severity: 'success', summary: 'Created', detail: 'Document created' });
+        await createDocument(data as Omit<Document, 'id'>);
+        toast.current?.show({
+          severity: 'success',
+          summary: 'Created',
+          detail: 'Document created',
+        });
       }
       setShowForm(false);
       loadDocuments();
     } catch {
-      toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Submit failed' });
+      toast.current?.show({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Submit failed',
+      });
     }
+  };
+
+  const getMemberName = (memberId: number | undefined): string => {
+    if (memberId === undefined) return '—';
+    const member = members.find((m) => m.id === memberId);
+    return member ? `${member.firstName} ${member.lastName}` : '—';
+  };
+
+  const renderUrl = (rowData: Document) => {
+    const url = rowData.url;
+    const validUrl = url.startsWith('http://') || url.startsWith('https://') ? url : `https://${url}`;
+    return (
+      <a href={validUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#0d6efd' }}>
+        {url}
+      </a>
+    );
   };
 
   const actionBodyTemplate = (rowData: Document) => (
     <div className="d-flex gap-2">
       <Button icon="pi pi-pencil" rounded text onClick={() => handleEdit(rowData)} />
-      <Button icon="pi pi-trash" severity="danger" rounded text onClick={() => handleDelete(rowData.id!)} />
+      <Button icon="pi pi-trash" rounded text severity="danger" onClick={() => handleDelete(rowData.id!)} />
     </div>
-  );
-
-  const memberNameTemplate = (rowData: Document) =>
-    rowData.member ? `${rowData.member.firstName} ${rowData.member.lastName}` : '—';
-
-  const urlTemplate = (rowData: Document) => (
-    <a href={rowData.url} target="_blank" rel="noopener noreferrer">
-      {rowData.url}
-    </a>
   );
 
   return (
     <div className="card">
       <Toast ref={toast} />
+
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h2>Documents</h2>
         <Button label="New Document" icon="pi pi-plus" onClick={handleCreate} />
@@ -97,8 +146,8 @@ export default function DocumentPage() {
 
       <DataTable value={documents} paginator rows={10} stripedRows>
         <Column field="name" header="Name" />
-        <Column header="URL" body={urlTemplate} />
-        <Column header="Member" body={memberNameTemplate} />
+        <Column header="URL" body={renderUrl} />
+        <Column header="Member" body={(rowData) => getMemberName(rowData.memberId ?? rowData.member?.id)} />
         <Column body={actionBodyTemplate} header="Actions" style={{ width: '8rem' }} />
       </DataTable>
 
@@ -113,6 +162,7 @@ export default function DocumentPage() {
           document={selectedDocument ?? undefined}
           onSubmit={handleSubmit}
           onCancel={() => setShowForm(false)}
+          members={members}
         />
       </Dialog>
     </div>
