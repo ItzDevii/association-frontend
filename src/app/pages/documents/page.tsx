@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Document } from '@/types/document';
 import { Member } from '@/types/member';
+
 import {
   getDocuments,
   createDocument,
@@ -24,6 +25,11 @@ export default function DocumentPage() {
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [showForm, setShowForm] = useState(false);
   const toast = useRef<Toast>(null);
+
+  useEffect(() => {
+    loadDocuments();
+    loadMembers();
+  }, []);
 
   const loadDocuments = async () => {
     try {
@@ -50,11 +56,6 @@ export default function DocumentPage() {
       });
     }
   };
-
-  useEffect(() => {
-    loadDocuments();
-    loadMembers();
-  }, []);
 
   const handleCreate = () => {
     setSelectedDocument(null);
@@ -129,19 +130,19 @@ export default function DocumentPage() {
   };
 
   const actionBodyTemplate = (rowData: Document) => (
-    <div className="d-flex gap-2">
+    <div className="actions-column">
       <Button icon="pi pi-pencil" rounded text onClick={() => handleEdit(rowData)} />
       <Button icon="pi pi-trash" rounded text severity="danger" onClick={() => handleDelete(rowData.id!)} />
     </div>
   );
 
   return (
-    <div className="card">
+    <div className="table-wrapper">
       <Toast ref={toast} />
 
-      <div className="d-flex justify-content-between align-items-center mb-3">
+      <div className="table-header">
         <h2>Documents</h2>
-        <Button label="New Document" icon="pi pi-plus" onClick={handleCreate} />
+        <Button label="New Document" icon="pi pi-plus" className="btn btn-primary" onClick={handleCreate} />
       </div>
 
       <DataTable value={documents} paginator rows={10} stripedRows>
@@ -157,6 +158,7 @@ export default function DocumentPage() {
         header={selectedDocument ? 'Edit Document' : 'New Document'}
         style={{ width: '40rem' }}
         modal
+        className="member-dialog"
       >
         <DocumentForm
           document={selectedDocument ?? undefined}

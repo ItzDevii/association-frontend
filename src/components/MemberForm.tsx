@@ -6,7 +6,6 @@ import { InputText } from 'primereact/inputtext';
 import { Calendar } from 'primereact/calendar';
 import { Dropdown } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
-import '@/styles/shared/FormButtons.css';
 
 interface MemberFormProps {
   member?: Member;
@@ -62,8 +61,8 @@ export default function MemberForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-fluid">
-      <div className="mb-3">
+    <form onSubmit={handleSubmit} className="dialog-form">
+      <div>
         <label htmlFor="firstName">First Name</label>
         <InputText
           id="firstName"
@@ -73,7 +72,7 @@ export default function MemberForm({
         />
       </div>
 
-      <div className="mb-3">
+      <div>
         <label htmlFor="lastName">Last Name</label>
         <InputText
           id="lastName"
@@ -83,7 +82,7 @@ export default function MemberForm({
         />
       </div>
 
-      <div className="mb-3">
+      <div>
         <label htmlFor="joinDate">Join Date</label>
         <Calendar
           id="joinDate"
@@ -95,7 +94,7 @@ export default function MemberForm({
         />
       </div>
 
-      <div className="mb-3">
+      <div>
         <label htmlFor="status">Status</label>
         <Dropdown
           id="status"
@@ -107,17 +106,19 @@ export default function MemberForm({
         />
       </div>
 
-      <div className="form-buttons">
+      <div className="dialog-footer">
         <Button
           label="Cancel"
           type="button"
-          className="p-button-danger"
+          severity="danger"
           onClick={onCancel}
+          className="btn btn-cancel"
         />
         <Button
           label={member ? 'Update' : 'Create'}
           type="submit"
-          className="p-button-success"
+          severity="success"
+          className="btn btn-success"
         />
       </div>
     </form>

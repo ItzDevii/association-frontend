@@ -8,7 +8,6 @@ import { Calendar } from 'primereact/calendar';
 import { Dropdown } from 'primereact/dropdown';
 import { InputNumber } from 'primereact/inputnumber';
 import { Button } from 'primereact/button';
-import '@/styles/shared/FormButtons.css';
 
 interface CotisationFormProps {
   cotisation?: Cotisation;
@@ -68,21 +67,23 @@ export default function CotisationForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-fluid">
-      <div className="mb-3">
+    <form onSubmit={handleSubmit} className="dialog-form">
+      <div className="form-group">
         <label htmlFor="amount">Amount</label>
         <InputNumber
           id="amount"
           value={amount}
           onValueChange={(e) => setAmount(e.value ?? 0)}
-          mode="decimal"
+          mode="currency"
           currency="MAD"
           locale="fr-MA"
+          minFractionDigits={2}
           required
+          className="w-full"
         />
       </div>
 
-      <div className="mb-3">
+      <div className="form-group">
         <label htmlFor="paymentDate">Payment Date</label>
         <Calendar
           id="paymentDate"
@@ -91,10 +92,11 @@ export default function CotisationForm({
           dateFormat="yy-mm-dd"
           showIcon
           required
+          className="w-full"
         />
       </div>
 
-      <div className="mb-3">
+      <div className="form-group">
         <label htmlFor="member">Member</label>
         <Dropdown
           id="member"
@@ -117,15 +119,24 @@ export default function CotisationForm({
           }}
           placeholder="Select Member"
           filter
-          className={memberError ? 'p-invalid' : ''}
+          className={`w-full ${memberError ? 'p-invalid' : ''}`}
           required
         />
         {memberError && <small className="p-error">Member is required</small>}
       </div>
 
-      <div className="form-buttons">
-        <Button label="Cancel" type="button" className="p-button-danger" onClick={onCancel} />
-        <Button label={cotisation ? 'Update' : 'Create'} type="submit" className="p-button-success" />
+      <div className="dialog-footer">
+        <Button
+          label="Cancel"
+          type="button"
+          className="btn btn-cancel"
+          onClick={onCancel}
+        />
+        <Button
+          label={cotisation ? 'Update' : 'Create'}
+          type="submit"
+          className="btn btn-success"
+        />
       </div>
     </form>
   );

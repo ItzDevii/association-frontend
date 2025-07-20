@@ -51,7 +51,7 @@ export const KeycloakProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
         if (auth && keycloak.token) {
           setTokenState(keycloak.token);
-          setAuthToken(keycloak.token); // ✅ store globally
+          setAuthToken(keycloak.token);
 
           const payload = JSON.parse(atob(keycloak.token.split('.')[1]));
           setUsername(payload?.preferred_username || null);
@@ -61,7 +61,7 @@ export const KeycloakProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           keycloak.updateToken(60).then((refreshed) => {
             if (refreshed && keycloak.token) {
               setTokenState(keycloak.token);
-              setAuthToken(keycloak.token); // ✅ refresh global token
+              setAuthToken(keycloak.token);
 
               const payload = JSON.parse(atob(keycloak.token.split('.')[1]));
               setUsername(payload?.preferred_username || null);

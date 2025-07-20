@@ -4,123 +4,151 @@ import { useEffect, useState } from 'react';
 import { Participation } from '@/types/participation';
 import { Member } from '@/types/member';
 import { Activity } from '@/types/activity';
-import { getMembers } from '@/services/memberService';
-import { getActivities } from '@/services/activityService';
-import { Dropdown } from 'primereact/dropdown';
+
 import { Calendar } from 'primereact/calendar';
+import { Dropdown } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
 
-interface Props {
+interface ParticipationFormProps {
   participation?: Participation;
   onSubmit: (data: Participation | Omit<Participation, 'id'>) => Promise<void>;
   onCancel: () => void;
+  members: Member[];
+  activities: Activity[];
 }
 
-const ParticipationForm: React.FC<Props> = ({ participation, onSubmit, onCancel }) => {
-  const [formData, setFormData] = useState<Omit<Participation, 'id'>>({
-    member: {} as Member,
-    activity: {} as Activity,
-    signupDate: new Date().toISOString().split('T')[0],
-  });
+const formatDateToLocalString = (date: Date): string => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
 
-  const [members, setMembers] = useState<{ label: string; value: number; original: Member }[]>([]);
-  const [activities, setActivities] = useState<{ label: string; value: number; original: Activity }[]>([]);
+const parseDateFromString = (str: string): Date => {
+  const [y, m, d] = str.split('-').map(Number);
+  return new Date(y, m - 1, d);
+};
+
+export default function ParticipationForm({
+  participation,
+  onSubmit,
+  onCancel,
+  members,
+  activities,
+}: ParticipationFormProps) {
+  const [memberId, setMemberId] = useState<number | null>(null);
+  const [activityId, setActivityId] = useState<number | null>(null);
+  const [signupDate, setSignupDate] = useState<Date>(new Date());
+  const [memberError, setMemberError] = useState(false);
+  const [activityError, setActivityError] = useState(false);
 
   useEffect(() => {
     if (participation) {
-      setFormData({
-        member: participation.member,
-        activity: participation.activity,
-        signupDate: participation.signupDate,
-      });
+      setMemberId(participation.memberId);
+      setActivityId(participation.activityId);
+      setSignupDate(parseDateFromString(participation.signupDate));
+    } else {
+      setMemberId(members.length > 0 ? members[0].id! : null);
+      setActivityId(activities.length > 0 ? activities[0].id! : null);
     }
-  }, [participation]);
-
-  useEffect(() => {
-    getMembers().then((data) => {
-      const formatted = data.map((m) => ({
-        label: `${m.firstName} ${m.lastName}`,
-        value: m.id,
-        original: m,
-      }));
-      setMembers(formatted);
-    });
-
-    getActivities().then((data) => {
-      const formatted = data.map((a) => ({
-        label: a.name,
-        value: a.id,
-        original: a,
-      }));
-      setActivities(formatted);
-    });
-  }, []);
-
-  const handleChange = (field: keyof typeof formData, value: any) => {
-    setFormData({ ...formData, [field]: value });
-  };
+  }, [participation, members, activities]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (participation) {
-      await onSubmit({ ...participation, ...formData });
-    } else {
-      await onSubmit(formData);
-    }
+
+    if (memberId === null) setMemberError(true);
+    if (activityId === null) setActivityError(true);
+    if (memberId === null || activityId === null) return;
+
+    const payload: Participation | Omit<Participation, 'id'> = {
+      ...(participation || {}),
+      memberId,
+      activityId,
+      signupDate: formatDateToLocalString(signupDate),
+    };
+
+    await onSubmit(payload);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-fluid">
-      <div className="mb-3">
+    <form onSubmit={handleSubmit} className="dialog-form">
+      <div className="form-group">
         <label htmlFor="member">Member</label>
         <Dropdown
           id="member"
-          value={formData.member?.id}
+          value={memberId}
           options={members}
+          optionValue="id"
+          optionLabel="firstName"
           onChange={(e) => {
-            const selected = members.find((m) => m.value === e.value);
-            if (selected) handleChange('member', selected.original);
+            setMemberId(e.value);
+            setMemberError(false);
+          }}
+          itemTemplate={(m: Member) => (
+            <span>{m.firstName} {m.lastName}</span>
+          )}
+          valueTemplate={() => {
+            const selected = members.find((m) => m.id === memberId);
+            return selected ? (
+              <span>{selected.firstName} {selected.lastName}</span>
+            ) : (
+              <span>Select Member</span>
+            );
           }}
           placeholder="Select Member"
+          filter
+          className={`w-full ${memberError ? 'p-invalid' : ''}`}
+          required
         />
+        {memberError && <small className="p-error">Member is required</small>}
       </div>
 
-      <div className="mb-3">
+      <div className="form-group">
         <label htmlFor="activity">Activity</label>
         <Dropdown
           id="activity"
-          value={formData.activity?.id}
+          value={activityId}
           options={activities}
+          optionValue="id"
+          optionLabel="name"
           onChange={(e) => {
-            const selected = activities.find((a) => a.value === e.value);
-            if (selected) handleChange('activity', selected.original);
+            setActivityId(e.value);
+            setActivityError(false);
           }}
           placeholder="Select Activity"
+          filter
+          className={`w-full ${activityError ? 'p-invalid' : ''}`}
+          required
         />
+        {activityError && <small className="p-error">Activity is required</small>}
       </div>
 
-      <div className="mb-3">
+      <div className="form-group">
         <label htmlFor="signupDate">Signup Date</label>
         <Calendar
           id="signupDate"
-          value={new Date(formData.signupDate)}
-          onChange={(e) =>
-            handleChange(
-              'signupDate',
-              (e.value as Date)?.toISOString().split('T')[0] || ''
-            )
-          }
-          showIcon
+          value={signupDate}
+          onChange={(e) => setSignupDate(e.value as Date)}
           dateFormat="yy-mm-dd"
+          showIcon
+          required
+          className="w-full"
         />
       </div>
 
-      <div className="d-flex justify-content-end gap-2 mt-3">
-        <Button type="button" label="Cancel" severity="secondary" onClick={onCancel} />
-        <Button type="submit" label={participation ? 'Update' : 'Create'} />
+      <div className="dialog-footer">
+        <Button
+          label="Cancel"
+          type="button"
+          className="btn btn-cancel"
+          onClick={onCancel}
+        />
+        <Button
+          label={participation ? 'Update' : 'Create'}
+          type="submit"
+          className="btn btn-success"
+        />
       </div>
     </form>
   );
-};
-
-export default ParticipationForm;
+}

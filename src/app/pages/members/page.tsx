@@ -27,7 +27,11 @@ export default function MemberPage() {
       const data = await getMembers();
       setMembers(data);
     } catch {
-      toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Failed to load members' });
+      toast.current?.show({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Failed to load members',
+      });
     }
   };
 
@@ -48,10 +52,18 @@ export default function MemberPage() {
   const handleDelete = async (id: number) => {
     try {
       await deleteMember(id);
-      toast.current?.show({ severity: 'success', summary: 'Deleted', detail: 'Member deleted' });
+      toast.current?.show({
+        severity: 'success',
+        summary: 'Deleted',
+        detail: 'Member deleted',
+      });
       loadMembers();
     } catch {
-      toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Delete failed' });
+      toast.current?.show({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Delete failed',
+      });
     }
   };
 
@@ -59,31 +71,59 @@ export default function MemberPage() {
     try {
       if ('id' in data && data.id) {
         await updateMember(data);
-        toast.current?.show({ severity: 'success', summary: 'Updated', detail: 'Member updated' });
+        toast.current?.show({
+          severity: 'success',
+          summary: 'Updated',
+          detail: 'Member updated',
+        });
       } else {
         await createMember(data as Omit<Member, 'id'>);
-        toast.current?.show({ severity: 'success', summary: 'Created', detail: 'Member created' });
+        toast.current?.show({
+          severity: 'success',
+          summary: 'Created',
+          detail: 'Member created',
+        });
       }
       setShowForm(false);
       loadMembers();
     } catch {
-      toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Submit failed' });
+      toast.current?.show({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Submit failed',
+      });
     }
   };
 
   const actionBodyTemplate = (rowData: Member) => (
-    <div className="d-flex gap-2">
-      <Button icon="pi pi-pencil" rounded text onClick={() => handleEdit(rowData)} />
-      <Button icon="pi pi-trash" severity="danger" rounded text onClick={() => handleDelete(rowData.id!)} />
+    <div className="actions-column">
+      <Button
+        icon="pi pi-pencil"
+        rounded
+        text
+        onClick={() => handleEdit(rowData)}
+      />
+      <Button
+        icon="pi pi-trash"
+        severity="danger"
+        rounded
+        text
+        onClick={() => handleDelete(rowData.id!)}
+      />
     </div>
   );
 
   return (
-    <div className="card">
+    <div className="table-wrapper">
       <Toast ref={toast} />
-      <div className="d-flex justify-content-between align-items-center mb-3">
+      <div className="table-header">
         <h2>Members</h2>
-        <Button label="New Member" icon="pi pi-plus" onClick={handleCreate} />
+        <Button
+          label="New Member"
+          icon="pi pi-plus"
+          className="btn btn-primary"
+          onClick={handleCreate}
+        />
       </div>
 
       <DataTable value={members} paginator rows={10} stripedRows>
@@ -91,7 +131,11 @@ export default function MemberPage() {
         <Column field="lastName" header="Last Name" />
         <Column field="joinDate" header="Join Date" />
         <Column field="status" header="Status" />
-        <Column body={actionBodyTemplate} header="Actions" style={{ width: '8rem' }} />
+        <Column
+          body={actionBodyTemplate}
+          header="Actions"
+          style={{ width: '8rem' }}
+        />
       </DataTable>
 
       <Dialog
@@ -100,6 +144,7 @@ export default function MemberPage() {
         header={selectedMember ? 'Edit Member' : 'New Member'}
         style={{ width: '40rem' }}
         modal
+        className="member-dialog"
       >
         <MemberForm
           member={selectedMember ?? undefined}

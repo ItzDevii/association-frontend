@@ -1,9 +1,16 @@
-import { Member } from './member';
-import { Activity } from './activity';
-
 export interface Participation {
-  id: number;
+  id?: number;
+  memberId: number;
+  activityId: number;
   signupDate: string;
-  member: Member;
-  activity: Activity;
+
+  member?: {
+    id: number;
+    firstName: string;
+    lastName: string;
+  };
+  activity?: {
+    id: number;
+    name: string;
+  };
 }

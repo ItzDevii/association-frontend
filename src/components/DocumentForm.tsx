@@ -55,24 +55,26 @@ export default function DocumentForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-fluid">
-      <div className="mb-3">
+    <form onSubmit={handleSubmit} className="dialog-form">
+      <div className="form-group">
         <label htmlFor="name">Name</label>
         <InputText
           id="name"
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
+          className="w-full"
         />
       </div>
 
-      <div className="mb-3">
+      <div className="form-group">
         <label htmlFor="url">URL</label>
         <InputText
           id="url"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           required
+          className="w-full"
         />
         {url && (
           <div className="mt-2">
@@ -88,7 +90,7 @@ export default function DocumentForm({
         )}
       </div>
 
-      <div className="mb-3">
+      <div className="form-group">
         <label htmlFor="member">Member</label>
         <Dropdown
           id="member"
@@ -111,15 +113,15 @@ export default function DocumentForm({
           }}
           placeholder="Select Member"
           filter
-          className={memberError ? 'p-invalid' : ''}
+          className={`w-full ${memberError ? 'p-invalid' : ''}`}
           required
         />
         {memberError && <small className="p-error">Member is required</small>}
       </div>
 
-      <div className="form-buttons">
-        <Button label="Cancel" type="button" className="p-button-danger" onClick={onCancel} />
-        <Button label={document ? 'Update' : 'Create'} type="submit" className="p-button-success" />
+      <div className="dialog-footer">
+        <Button label="Cancel" type="button" className="btn btn-cancel" onClick={onCancel} />
+        <Button label={document ? 'Update' : 'Create'} type="submit" className="btn btn-success" />
       </div>
     </form>
   );

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FaTachometerAlt, FaUsers, FaClipboardList, FaMoneyBillWave, FaFileAlt } from 'react-icons/fa';
+import { FaTachometerAlt, FaUsers, FaClipboardList, FaMoneyBillWave, FaFileAlt, FaUserCheck } from 'react-icons/fa';
 
 const navItems = [
   { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/pages/dashboard' },
@@ -10,6 +10,7 @@ const navItems = [
   { label: 'Activities', icon: <FaClipboardList />, path: '/pages/activities' },
   { label: 'Cotisations', icon: <FaMoneyBillWave />, path: '/pages/cotisations' },
   { label: 'Documents', icon: <FaFileAlt />, path: '/pages/documents' },
+  { label: 'Participations', icon: <FaUserCheck />, path: '/pages/participations' },
 ];
 
 export default function Sidebar() {

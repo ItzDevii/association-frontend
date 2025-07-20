@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { Cotisation } from '@/types/cotisation';
 import { Member } from '@/types/member';
+
 import {
   getCotisations,
   createCotisation,
@@ -24,6 +25,11 @@ export default function CotisationPage() {
   const [selectedCotisation, setSelectedCotisation] = useState<Cotisation | null>(null);
   const [showForm, setShowForm] = useState(false);
   const toast = useRef<Toast>(null);
+
+  useEffect(() => {
+    loadCotisations();
+    loadMembers();
+  }, []);
 
   const loadCotisations = async () => {
     try {
@@ -50,11 +56,6 @@ export default function CotisationPage() {
       });
     }
   };
-
-  useEffect(() => {
-    loadCotisations();
-    loadMembers();
-  }, []);
 
   const handleCreate = () => {
     setSelectedCotisation(null);
@@ -118,7 +119,7 @@ export default function CotisationPage() {
   };
 
   const actionBodyTemplate = (rowData: Cotisation) => (
-    <div className="d-flex gap-2">
+    <div className="actions-column">
       <Button
         icon="pi pi-pencil"
         rounded
@@ -136,12 +137,17 @@ export default function CotisationPage() {
   );
 
   return (
-    <div className="card">
+    <div className="table-wrapper">
       <Toast ref={toast} />
 
-      <div className="d-flex justify-content-between align-items-center mb-3">
+      <div className="table-header">
         <h2>Cotisations</h2>
-        <Button label="New Cotisation" icon="pi pi-plus" onClick={handleCreate} />
+        <Button
+          label="New Cotisation"
+          icon="pi pi-plus"
+          className="btn btn-primary"
+          onClick={handleCreate}
+        />
       </div>
 
       <DataTable value={cotisations} paginator rows={10} stripedRows>
@@ -151,7 +157,11 @@ export default function CotisationPage() {
           header="Member"
           body={(rowData) => getMemberName(rowData.memberId)}
         />
-        <Column body={actionBodyTemplate} header="Actions" style={{ width: '8rem' }} />
+        <Column
+          body={actionBodyTemplate}
+          header="Actions"
+          style={{ width: '8rem' }}
+        />
       </DataTable>
 
       <Dialog
@@ -160,6 +170,7 @@ export default function CotisationPage() {
         header={selectedCotisation ? 'Edit Cotisation' : 'New Cotisation'}
         style={{ width: '40rem' }}
         modal
+        className="member-dialog"
       >
         <CotisationForm
           cotisation={selectedCotisation ?? undefined}
